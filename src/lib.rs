@@ -10,6 +10,16 @@ pub struct FlatString<const SIZE: usize = 14> {
     chars: u8,
 }
 impl<const SIZE: usize> FlatString<SIZE> {
+    /// Create a new FlatString with a fixed size
+    /// 
+    /// # Panics
+    /// - If SIZE is 0 or greater than 255
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let s = FlatString::<10>::new();
+    /// ```
     pub fn new() -> Self {
         assert!(SIZE > 0, "SIZE must be greater than 0");
         assert!(SIZE < 256, "SIZE must be less than 256");
@@ -19,24 +29,44 @@ impl<const SIZE: usize> FlatString<SIZE> {
             chars: 0,
         }
     }
+
+    /// Create a new FlatString from a string slice
+    /// If the string slice is larger than the available space, only the first characters that fit will be copied
+    /// 
+    /// # Panics
+    /// - If SIZE is 0 or greater than 255
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let s = FlatString::<10>::from_str("Hello");
+    /// ```
     pub fn from_str(text: &str) -> Self {
         let mut this = Self::new();
         this.push_str(text);
         this
     }
+
+    /// Clears the content of the FlatString. This operation does not deallocate the memory, not it does not clear the content o the string. It only resets the length and characters count to 0.
     #[inline(always)]
     pub fn clear(&mut self) {
         self.len = 0;
         self.chars = 0;
     }
+
+    /// Returns the length of the string in bytes. This operation is performed in O(1) time.
     #[inline(always)]
     pub fn len(&self) -> usize {
         self.len as usize
     }
+
+    /// Returns the number of characters in the string. This operation is performed in O(1) time.
     #[inline(always)]
     pub fn chars_count(&self) -> usize {
         self.chars as usize
     }
+
+    /// Returns the capacity of the FlatString. This operation is performed in O(1) time.
     #[inline(always)]
     pub fn capacity(&self) -> usize {
         SIZE
@@ -74,6 +104,15 @@ impl<const SIZE: usize> FlatString<SIZE> {
             self.chars += (count_chars - 1) as u8;
         }
     }
+
+    /// Appends a string slice to the FlatString. If the string slice is larger than the available space, only the first characters that fit will be copied.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let mut s = FlatString::<10>::new();
+    /// s.push_str("Hello");
+    /// ```
     #[inline(always)]
     pub fn push_str(&mut self, text: &str) {
         // try the fast method first
@@ -82,12 +121,31 @@ impl<const SIZE: usize> FlatString<SIZE> {
             self.fill_with_str(text);
         }
     }
+
+    /// Appends a character to the FlatString. If the character does not fit in the available space, it will not be copied. 
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let mut s = FlatString::<10>::new();
+    /// s.push('H');
+    /// ```
     #[inline(always)]
     pub fn push(&mut self, c: char) {
         let mut bytes = [0; 8];
         self.push_str(c.encode_utf8(&mut bytes));
     }
 
+    /// Tries to append a string slice to the FlatString. If the string slice can fit in the available space, it will be copied and Some(&str) will be returned. Otherwise, None will be returned and ths string will remain unchanged.    
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let mut s = FlatString::<10>::new();
+    /// assert_eq!(s.try_push_str("Hello"), Some("Hello"));
+    /// assert_eq!(s.try_push_str(" Wor"), Some("Hello Wor"));
+    /// assert_eq!(s.try_push_str("ld !"), None); // the string does not fit
+    /// ```
     #[inline(always)]
     pub fn try_push_str(&mut self, text: &str) -> Option<&str> {
         if self.add_entire_string(text) {
@@ -97,6 +155,19 @@ impl<const SIZE: usize> FlatString<SIZE> {
         }
     }
 
+    /// Tries to append a character to the FlatString. If the character can fit in the available space, it will be copied and Some(&str) will be returned. Otherwise, None will be returned and ths string will remain unchanged.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let mut s = FlatString::<5>::new();
+    /// assert_eq!(s.try_push('H'), Some("H"));
+    /// assert_eq!(s.try_push('e'), Some("He"));
+    /// assert_eq!(s.try_push('l'), Some("Hel"));
+    /// assert_eq!(s.try_push('l'), Some("Hell"));
+    /// assert_eq!(s.try_push('o'), Some("Hello"));
+    /// assert_eq!(s.try_push('!'), None); // the character does not fit
+    /// ```
     #[inline(always)]
     pub fn try_push(&mut self, c: char) -> Option<&str> {
         let mut bytes = [0; 8];
@@ -107,11 +178,28 @@ impl<const SIZE: usize> FlatString<SIZE> {
         }
     }
 
+    /// Sets the content of the FlatString to a string slice. If the string slice is larger than the available space, only the first characters that fit will be copied.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let mut s = FlatString::<10>::new();
+    /// s.set("Hello");
+    /// ```
     #[inline(always)]
     pub fn set(&mut self, text: &str) {
         self.clear();
         self.push_str(text);
     }
+
+    /// Returns the content of the FlatString as a string slice. This operation is performed in O(1) time.
+    /// 
+    /// # Example
+    /// ```rust
+    /// use flat_string::FlatString;
+    /// let s = FlatString::<10>::from_str("Hello");
+    /// assert_eq!(s.as_str(), "Hello");
+    /// ```
     #[inline(always)]
     pub fn as_str(&self) -> &str {
         if self.len == 0 {
