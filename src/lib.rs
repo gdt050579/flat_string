@@ -128,3 +128,15 @@ impl<const SIZE: usize> Deref for FlatString<SIZE> {
         self.as_str()
     }
 }
+
+impl<const SIZE: usize> Default for FlatString<SIZE> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<const SIZE: usize> std::fmt::Display for FlatString<SIZE> {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        self.as_str().fmt(f)
+    }
+}

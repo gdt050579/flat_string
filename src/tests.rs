@@ -194,3 +194,9 @@ fn check_deref_from_str() {
     assert_eq!(s.ends_with("lo"), true);
     assert_eq!(s.contains("ell"), true);
 }
+
+#[test]
+fn check_display() {
+    let s = FlatString::<10>::from_str("Hello");
+    assert_eq!(format!("{}", s), "Hello");    
+}
