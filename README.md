@@ -1,1 +1,2 @@
-# flat_string
+# FlatString
+
