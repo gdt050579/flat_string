@@ -122,7 +122,7 @@ impl<const SIZE: usize> FlatString<SIZE> {
     }
 }
 
-impl Deref for FlatString {
+impl<const SIZE: usize> Deref for FlatString<SIZE> {
     type Target = str;
     fn deref(&self) -> &Self::Target {
         self.as_str()
