@@ -1,6 +1,17 @@
 [package]
 name = "flat_string"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
+authors = ["gavrilut.dragos@gmail.com"]
+description = "FlatString is fixed allocated size String that that can be created direcly on the stack."
+license = "MIT"
+keywords = ["stack allocated", "string", "flat structure"]
+categoies = ["data-structures"]
+repository = "https://github.com/gdt050579/flat_string/"
+readme = "README.md"
+
+
+[lib]
+name = "flat_string" # This is the library name
 
 [dependencies]
