@@ -39,6 +39,7 @@ The following methods are available for the `FlatString`:
 | `from_str`     | Create a `FlatString` from a string slice                                                                                                                                             |
 | `new`          | Create an empty `FlatString`                                                                                                                                                          |
 | `len`          | Get the length of the string                                                                                                                                                          |
+| `is_empty`     | Check if the string is empty                                                                                                                                                          |
 | `chars_count`  | Get the number of characters in the string                                                                                                                                            |
 | `capacity`     | Get the capacity of the string                                                                                                                                                        |
 | `as_str`       | Get the string as a `&str`                                                                                                                                                            |

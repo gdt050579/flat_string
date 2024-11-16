@@ -60,6 +60,12 @@ impl<const SIZE: usize> FlatString<SIZE> {
         self.len as usize
     }
 
+    /// Returns true if the string is empty, false otherwise. This operation is performed in O(1) time.
+    #[inline(always)]
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
     /// Returns the number of characters in the string. This operation is performed in O(1) time.
     #[inline(always)]
     pub fn chars_count(&self) -> usize {
