@@ -261,22 +261,6 @@ impl<const SIZE: usize> FlatString<SIZE> {
         self.push_str(std::str::from_utf8(&tmp[idx..initial_len]).unwrap());
     }
 
-    /// Inserts a string slice into this FlatString at a byte position.
-    ///
-    /// #Panics
-    ///
-    /// Panics if idx is larger than the FlatString’s length, or if it does not lie on a char boundary.
-    pub fn insert_slow(&mut self, idx: usize, string: &str) {
-        let s = self.as_str();
-        assert!(idx <= self.len as usize);
-        assert!(s.is_char_boundary(idx));
-
-        let end = String::from(&s[idx..]);
-        self.truncate(idx);
-        self.push_str(string);
-        self.push_str(&end);
-    }
-
     /// Inserts a character into this FlatString at a byte position.
     ///
     /// #Panics
