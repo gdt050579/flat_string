@@ -11,10 +11,10 @@ pub struct FlatString<const SIZE: usize = 14> {
 }
 impl<const SIZE: usize> FlatString<SIZE> {
     /// Create a new FlatString with a fixed size
-    /// 
+    ///
     /// # Panics
     /// - If SIZE is 0 or greater than 255
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -32,10 +32,10 @@ impl<const SIZE: usize> FlatString<SIZE> {
 
     /// Create a new FlatString from a string slice
     /// If the string slice is larger than the available space, only the first characters that fit will be copied
-    /// 
+    ///
     /// # Panics
     /// - If SIZE is 0 or greater than 255
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -112,7 +112,7 @@ impl<const SIZE: usize> FlatString<SIZE> {
     }
 
     /// Appends a string slice to the FlatString. If the string slice is larger than the available space, only the first characters that fit will be copied.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -128,8 +128,8 @@ impl<const SIZE: usize> FlatString<SIZE> {
         }
     }
 
-    /// Appends a character to the FlatString. If the character does not fit in the available space, it will not be copied. 
-    /// 
+    /// Appends a character to the FlatString. If the character does not fit in the available space, it will not be copied.
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -142,8 +142,8 @@ impl<const SIZE: usize> FlatString<SIZE> {
         self.push_str(c.encode_utf8(&mut bytes));
     }
 
-    /// Tries to append a string slice to the FlatString. If the string slice can fit in the available space, it will be copied and Some(&str) will be returned. Otherwise, None will be returned and ths string will remain unchanged.    
-    /// 
+    /// Tries to append a string slice to the FlatString. If the string slice can fit in the available space, it will be copied and Some(&str) will be returned. Otherwise, None will be returned and ths string will remain unchanged.
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -162,7 +162,7 @@ impl<const SIZE: usize> FlatString<SIZE> {
     }
 
     /// Tries to append a character to the FlatString. If the character can fit in the available space, it will be copied and Some(&str) will be returned. Otherwise, None will be returned and ths string will remain unchanged.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -185,7 +185,7 @@ impl<const SIZE: usize> FlatString<SIZE> {
     }
 
     /// Sets the content of the FlatString to a string slice. If the string slice is larger than the available space, only the first characters that fit will be copied.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -199,7 +199,7 @@ impl<const SIZE: usize> FlatString<SIZE> {
     }
 
     /// Returns the content of the FlatString as a string slice. This operation is performed in O(1) time.
-    /// 
+    ///
     /// # Example
     /// ```rust
     /// use flat_string::FlatString;
@@ -213,6 +213,101 @@ impl<const SIZE: usize> FlatString<SIZE> {
         } else {
             unsafe { std::str::from_utf8_unchecked(&self.data[..self.len as usize]) }
         }
+    }
+
+    /// Truncates this FlatString to the specified length.
+    ///
+    /// If new_len is greater than or equal to the string’s current length, this has no effect.
+    ///
+    /// # Panics
+    /// Panics if new_len does not lie on a char boundary.
+    pub fn truncate(&mut self, new_len: usize) {
+        if new_len >= self.len as usize {
+            return;
+        }
+        let p = &(self.as_str())[..new_len];
+        self.chars = p.chars().count() as u8;
+        self.len = new_len as u8;
+    }
+
+    /// Removes the last character from the string buffer and returns it.
+    /// Returns None if this String is empty.
+    pub fn pop(&mut self) -> Option<char> {
+        if self.chars > 0 {
+            if let Some(ch) = self.chars().last() {
+                assert!(self.len >= ch.len_utf8() as u8);
+                self.chars -= 1;
+                self.len -= ch.len_utf8() as u8;
+                return Some(ch);
+            }
+        }
+        None
+    }
+
+    /// Inserts a string slice into this FlatString at a byte position.
+    ///
+    /// #Panics
+    ///
+    /// Panics if idx is larger than the FlatString’s length, or if it does not lie on a char boundary.
+    pub fn insert(&mut self, idx: usize, string: &str) {
+        assert!(idx <= self.len as usize);
+
+        let initial_len = self.len as usize;
+        let mut tmp: [u8; SIZE] = [0; SIZE];        
+        tmp.copy_from_slice(&self.data[..]);
+
+        self.truncate(idx);
+        self.push_str(string);
+        self.push_str(std::str::from_utf8(&tmp[idx..initial_len]).unwrap());
+    }
+
+    /// Inserts a string slice into this FlatString at a byte position.
+    ///
+    /// #Panics
+    ///
+    /// Panics if idx is larger than the FlatString’s length, or if it does not lie on a char boundary.
+    pub fn insert_slow(&mut self, idx: usize, string: &str) {
+        let s = self.as_str();
+        assert!(idx <= self.len as usize);
+        assert!(s.is_char_boundary(idx));
+
+        let end = String::from(&s[idx..]);
+        self.truncate(idx);
+        self.push_str(string);
+        self.push_str(&end);
+    }
+
+    /// Inserts a character into this FlatString at a byte position.
+    ///
+    /// #Panics
+    ///
+    /// Panics if idx is larger than the FlatString’s length, or if it does not lie on a char boundary.
+    pub fn insert_char(&mut self, idx: usize, ch: char) {
+        let mut bytes = [0; 8];
+        self.insert(idx, ch.encode_utf8(&mut bytes));
+    }
+
+    /// Removes a char from this FlatString at a byte position and returns it.
+    ///
+    /// # Panics
+    ///
+    /// Panics if idx is larger than or equal to the FlatString’s length, or if it does not lie on a char boundary.
+    pub fn remove(&mut self, idx: usize) -> char {
+        assert!(idx < self.len as usize);
+
+        let conv = std::str::from_utf8(&self.data[idx..]);
+        assert!(conv.is_ok());
+        let ch_opt = conv.unwrap().chars().next();
+        assert!(ch_opt.is_some());
+        let ch = ch_opt.unwrap();
+
+        let next_char_as_byte_index = idx + ch.len_utf8();
+        if next_char_as_byte_index < SIZE {
+            self.data.copy_within(next_char_as_byte_index.., idx);
+        }
+        self.len -= ch.len_utf8() as u8;
+        self.chars -= 1;
+        ch
     }
 }
 

@@ -49,6 +49,11 @@ The following methods are available for the `FlatString`:
 | `try_push_str` | Ads a string slice to the existig string only if the resulted string fits in the preallocated capacity. In this case this method will return `Some(&str)` otherwise it returns `None` |
 | `try_push`     | Adds a character to the existing string only if the resulted string fits in the preallocated capacity. In this case this method will return `Some(&str)` otherwise it returns `None`  |
 | `set`          | Set the string to a new value. If the new string size is bigger than the string capacity, the string will be truncated to fit in the allocated capacty.                               |
+| `truncate`     | Truncate the string to a specific number of bytes.                                                                                                                                    |
+| `pop`          | Removes the last character from the string buffer and returns it.                                                                                                                     |
+| `insert`       | Inserts a string slice into this FlatString at a byte position.                                                                                                                       |
+| `insert_char`  | Inserts a character into this FlatString at a byte position.                                                                                                                          |
+| `remove`       | Removes a char from this FlatString at a byte position and returns it.                                                                                                                |
 
 `FlatString` implements the following traits:
 - `std::fmt::Display` and `std::fmt::Debug` (this allows you to print the string using `println!` and `dbg!`)
