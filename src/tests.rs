@@ -221,30 +221,118 @@ fn check_truncate_panic() {
 fn check_pop() {
     let mut s = FlatString::<10>::from_str("Hi");
     assert_eq!(s.pop(), Some('i'));
+    assert_eq!(s.chars, 1);
+    assert_eq!(s.len, 1);
     assert_eq!(s.pop(), Some('H'));
+    assert_eq!(s.chars, 0);
+    assert_eq!(s.len, 0);
     assert_eq!(s.pop(), None);
+    assert_eq!(s.chars, 0);
+    assert_eq!(s.len, 0);
 
     s = FlatString::<10>::from_str("sこmんe");
     assert_eq!(s.pop(), Some('e'));
+    assert_eq!(s.chars, 4);
+    assert_eq!(s.len, 8);
     assert_eq!(s.pop(), Some('ん'));
+    assert_eq!(s.chars, 3);
+    assert_eq!(s.len, 5);
     assert_eq!(s.pop(), Some('m'));
+    assert_eq!(s.chars, 2);
+    assert_eq!(s.len, 4);
     assert_eq!(s.pop(), Some('こ'));
+    assert_eq!(s.chars, 1);
+    assert_eq!(s.len, 1);
     assert_eq!(s.pop(), Some('s'));
+    assert_eq!(s.chars, 0);
+    assert_eq!(s.len, 0);
     assert_eq!(s.pop(), None);
+    assert_eq!(s.chars, 0);
+    assert_eq!(s.len, 0);
 }
 
 #[test]
-fn check_insert() {
-    let mut s = FlatString::<10>::from_str("Hello");
+fn check_insert_middle_no_size_exceed() {
+    let mut s = FlatString::<10>::from_str("abcde");
+    s.insert(3, "012");
+    assert_eq!(s.as_str(), "abc012de");
+    assert_eq!(s.chars, 8);
+    assert_eq!(s.len, 8);
+}
 
-    s.insert(5, "!");
-    assert_eq!(s.as_str(), "Hello!");
+#[test]
+fn check_insert_start_no_size_exceed() {
+    let mut s = FlatString::<10>::from_str("abcde");
+    s.insert(0, "012");
+    assert_eq!(s.as_str(), "012abcde");
+    assert_eq!(s.chars, 8);
+    assert_eq!(s.len, 8);
+}
+
+#[test]
+fn check_insert_middle_exceeding_size() {
+    let mut s = FlatString::<10>::from_str("abcde");
+    s.insert(2, "0123456789");
+    assert_eq!(s.as_str(), "ab01234567");
+    assert_eq!(s.chars, 10);
+    assert_eq!(s.len, 10);
+}
+
+#[test]
+fn check_insert_middle_exact_size() {
+    let mut s = FlatString::<10>::from_str("abcde");
+    s.insert(5, "01234");
+    assert_eq!(s.as_str(), "abcde01234");
+    assert_eq!(s.chars, 10);
+    assert_eq!(s.len, 10);
+}
+
+#[test]
+fn check_insert_middle_unicode() {
+    let mut s = FlatString::<10>::from_str("Hello");
+    // insert unicode text in the middle
     s.insert(1, "んこ");
     assert_eq!(s.as_str(), "Hんこell");
+    assert_eq!(s.chars, 6);
+    assert_eq!(s.len, 10);
+}
+
+#[test]
+fn check_insert_unicode_last() {
+    // should not change the string
+    // because it would exceeed SIZE
+    let mut s = FlatString::<10>::from_str("Hんこell");
+    s.insert(9, "こ");
+    assert_eq!(s.as_str(), "Hんこell");
+    assert_eq!(s.chars, 6);
+    assert_eq!(s.len, 10);
+}
+
+#[test]
+fn check_insert_unicode_start() {
+    let mut s = FlatString::<10>::from_str("Hんこell");
+    // insert in the start
     s.insert(0, "ABC");
     assert_eq!(s.as_str(), "ABCHんこ");
-    s.insert(0, "ABC");
-    assert_eq!(s.as_str(), "ABCABCHん");
+    assert_eq!(s.chars, 6);
+    assert_eq!(s.len, 10);
+}
+
+#[test]
+fn check_insert_unicode_last_not_fitting() {
+    // simulate case when the last char is a unicode and
+    // cannot be entirely fit in the data array and should be dropped
+    let mut s = FlatString::<10>::from_str("ABCHんこ");
+    s.insert(0, "01");
+    assert_eq!(s.as_str(), "01ABCHん");
+    assert_eq!(s.chars, 7);
+    assert_eq!(s.len, 9);
+
+    let mut s = FlatString::<10>::from_str("ABCHんこ");
+    s.insert(0, "0");
+    assert_eq!(s.as_str(), "0ABCHん");
+    assert_eq!(s.chars, 6);
+    assert_eq!(s.len, 8);
 }
 
 #[test]
