@@ -249,16 +249,68 @@ impl<const SIZE: usize> FlatString<SIZE> {
     /// #Panics
     ///
     /// Panics if idx is larger than the FlatString’s length, or if it does not lie on a char boundary.
-    pub fn insert(&mut self, idx: usize, string: &str) {
-        assert!(idx <= self.len as usize);
+    ///
+    pub fn insert(&mut self, index: usize, text: &str) {
+        self.insert_fast(index, text);
+    }
 
-        let initial_len = self.len as usize;
-        let mut tmp: [u8; SIZE] = [0; SIZE];        
-        tmp.copy_from_slice(&self.data[..]);
+    fn insert_fast(&mut self, index: usize, text: &str) {
+        if index + text.len() < SIZE {
+            // there is room to shift all or a part of the existing text
+            self.rshift(index, text.len());
+        }
+        self.write_at(index, text);
+        self.chars = self
+            .walk_string(
+                std::str::from_utf8(&self.data[..self.len as usize]).unwrap(),
+                0,
+                SIZE,
+            )
+            .1 as u8;
+    }
 
-        self.truncate(idx);
-        self.push_str(string);
-        self.push_str(std::str::from_utf8(&tmp[idx..initial_len]).unwrap());
+    fn write_at(&mut self, index: usize, text: &str) {
+        let (poz, count_chars) = self.walk_string(text, index, SIZE);
+
+        if count_chars > 0 {
+            let bytes = text[..poz].as_bytes();
+            self.data[index..index + poz].copy_from_slice(bytes);
+            // increase len if the written text exceeds original length
+            self.len = self.len.max((index + poz) as u8);
+        }
+    }
+
+    fn rshift(&mut self, index: usize, shift_size: usize) {
+        let dst_start = index + shift_size;
+        let str_to_shift = std::str::from_utf8(&self.data[index..self.len as usize]).unwrap();
+        let max_bytes_to_shift = str_to_shift.len();
+
+        let (no_bytes_to_shift, no_chars_to_shift) =
+            self.walk_string(str_to_shift, dst_start, SIZE);
+
+        if no_chars_to_shift > 0 {
+            self.data
+                .copy_within(index..index + no_bytes_to_shift, dst_start);
+
+            // Adjust by the actual number of bytes added or removed.
+            // Removal is possibie when a unicode character cannot be
+            // entirely copied.
+            self.len += (shift_size + no_bytes_to_shift) as u8;
+            self.len -= max_bytes_to_shift as u8;
+        }
+    }
+
+    fn walk_string(&self, text: &str, start_index: usize, max_size: usize) -> (usize, usize) {
+        let mut no_bytes = 0;
+        let mut no_chars = 0;
+        for (_, c) in text.char_indices() {
+            if start_index + no_bytes + c.len_utf8() > max_size {
+                break;
+            }
+            no_bytes += c.len_utf8();
+            no_chars += 1;
+        }
+        (no_bytes, no_chars)
     }
 
     /// Inserts a character into this FlatString at a byte position.

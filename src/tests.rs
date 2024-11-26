@@ -336,6 +336,17 @@ fn check_insert_unicode_last_not_fitting() {
 }
 
 #[test]
+fn check_insert_unicode_add_last_not_fitting() {
+    // simulate case when the last char is a unicode and
+    // cannot be entirely fit in the data array and should be dropped
+    let mut s = FlatString::<5>::from_str("ABCDE");
+    s.insert(3, "ん");
+    assert_eq!(s.as_str(), "ABCDE");
+    assert_eq!(s.chars, 5);
+    assert_eq!(s.len, 5);
+}
+
+#[test]
 fn check_insert_char() {
     let mut s = FlatString::<6>::from_str("Hello");
 
